@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adjective Quiz</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #2c6e49;
+    }
+    .instructions {
+      background: #e8f5e9;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .question {
+      margin: 20px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .question-text {
+      font-size: 18px;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .option {
+      padding: 10px 15px;
+      background: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .option:hover {
+      background: #e3f2fd;
+      border-color: #90caf9;
+    }
+    .option.correct {
+      background: #e8f5e9 !important;
+      border-color: #4caf50;
+      color: #2e7d32;
+      font-weight: bold;
+    }
+    .option.incorrect {
+      background: #ffebee !important;
+      border-color: #ef5350;
+      color: #c62828;
+      font-weight: bold;
+    }
+    .feedback {
+      margin-top: 10px;
+      font-weight: bold;
+      min-height: 20px;
+    }
+    .score {
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      margin: 20px 0;
+      padding: 15px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .buttons {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .btn {
+      padding: 12px 24px;
+      font-size: 17px;
+      margin: 0 8px;
+      background: #2c6e49;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #1e5631;
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn.restart {
+      background: #64b5f6;
+    }
+    .btn.restart:hover {
+      background: #1976d2;
+    }
+    .final-result {
+      text-align: center;
+      padding: 20px;
+      background: #e8f5e9;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-size: 22px;
+      font-weight: bold;
+    }
+    .final-result.correct { color: #2e7d32; }
+    .final-result.almost { color: #ff9800; }
+    .final-result.try-again { color: #c62828; }
+  </style>
+</head>
+<body>
+
+  <h1>📝 Adjective Quiz</h1>
+
+  <div class="instructions">
+    <p><strong>Instructions:</strong> Choose the correct adjective to complete each sentence. Click an option to check instantly. Press <strong>Restart</strong> to play again with new question order!</p>
+  </div>
+
+  <div id="quiz-container"></div>
+
+  <div class="score" id="score-display">Score: 0 / 10</div>
+
+  <div class="buttons">
+    <button class="btn" id="checkBtn">Check All Answers</button>
+    <button class="btn restart" id="restartBtn">↻ Restart</button>
+  </div>
+
+  <div id="final-result"></div>
+
+  <script>
+    // Original question bank (will be shuffled)
+    const questionBank = [
+      {
+        question: "Thank you for your ___ invitation, we’ll come on Sunday.",
+        options: ["clever", "sweet", "kind"],
+        correct: 2
+      },
+      {
+        question: "They are quite ___ children, as some of their teachers have problems with them.",
+        options: ["cool", "naughty", "funny"],
+        correct: 1
+      },
+      {
+        question: "Because students spend long hours at school, it is important to have a ___ teacher who will give positive support to students.",
+        options: ["caring", "sweet", "cool"],
+        correct: 0
+      },
+      {
+        question: "The fireworks are ___, it’s now illegal to sell fireworks that are louder than 120 decibels.",
+        options: ["cool", "noisy", "friendly"],
+        correct: 1
+      },
+      {
+        question: "I prefer comedies. I like ___ films.",
+        options: ["clever", "naughty", "funny"],
+        correct: 2
+      },
+      {
+        question: "Don’t be afraid. Alex is a ___ dog.",
+        options: ["sweet", "friendly", "caring"],
+        correct: 1
+      },
+      {
+        question: "We had a ___ time at the party.",
+        options: ["cool", "kind", "funny"],
+        correct: 0
+      },
+      {
+        question: "The ___ schoolboy didn’t do his homework!",
+        options: ["cool", "noisy", "naughty"],
+        correct: 2
+      },
+      {
+        question: "A ___ person is someone who is willing to spend their time in order to help others.",
+        options: ["sweet", "caring", "friendly"],
+        correct: 1
+      },
+      {
+        question: "People at the hotel were very ___ and made us feel at home.",
+        options: ["funny", "clever", "friendly"],
+        correct: 2
+      }
+    ];
+
+    // Fisher-Yates shuffle
+    function shuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Shuffle options + track correct index
+    function shuffleWithOptions(question) {
+      const indices = [...Array(question.options.length).keys()];
+      const shuffledIndices = shuffle(indices);
+      
+      const shuffledOptions = shuffledIndices.map(i => question.options[i]);
+      const newCorrectIndex = shuffledIndices.indexOf(question.correct);
+
+      return {
+        question: question.question,
+        options: shuffledOptions,
+        correct: newCorrectIndex
+      };
+    }
+
+    let questions = [];
+    let score = 0;
+    let answeredCount = 0;
+
+    function initQuiz() {
+      // Reset state
+      score = 0;
+      answeredCount = 0;
+      document.getElementById('score-display').textContent = `Score: ${score} / 10`;
+      document.getElementById('final-result').innerHTML = '';
+      document.getElementById('checkBtn').disabled = false;
+
+      // Shuffle questions AND options
+      const shuffledQuestions = shuffle(questionBank).map(q => shuffleWithOptions(q));
+      questions = shuffledQuestions;
+
+      renderQuiz();
+    }
+
+    function renderQuiz() {
+      const container = document.getElementById('quiz-container');
+      container.innerHTML = '';
+
+      questions.forEach((q, index) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = 'question';
+        qDiv.id = `q${index}`;
+
+        qDiv.innerHTML = `
+          <div class="question-text">${index + 1}. ${q.question}</div>
+          <div class="options" id="options-${index}">
+            ${q.options.map((opt, i) => 
+              `<div class="option" data-question="${index}" data-option="${i}">${String.fromCharCode(97 + i)}) ${opt}</div>`
+            ).join('')}
+          </div>
+          <div class="feedback" id="feedback-${index}"></div>
+        `;
+
+        container.appendChild(qDiv);
+
+        // Add event listeners
+        q.options.forEach((_, i) => {
+          const optEl = document.querySelector(`[data-question="${index}"][data-option="${i}"]`);
+          optEl.addEventListener('click', () => selectAnswer(index, i));
+        });
+      });
+    }
+
+    function selectAnswer(questionIndex, optionIndex) {
+      const q = questions[questionIndex];
+      const options = document.querySelectorAll(`#options-${questionIndex} .option`);
+      const feedback = document.getElementById(`feedback-${questionIndex}`);
+
+      // Reset styles
+      options.forEach(opt => {
+        opt.classList.remove('correct', 'incorrect');
+        opt.style.pointerEvents = '';
+        opt.style.opacity = '';
+      });
+
+      if (optionIndex === q.correct) {
+        options[optionIndex].classList.add('correct');
+        feedback.textContent = "✅ Correct!";
+        feedback.style.color = "#2e7d32";
+        if (!options[optionIndex].dataset.answered) {
+          score++;
+          answeredCount++;
+          updateScore();
+        }
+      } else {
+        options[optionIndex].classList.add('incorrect');
+        feedback.textContent = `❌ Incorrect. Correct: ${String.fromCharCode(97 + q.correct)}) ${q.options[q.correct]}`;
+        feedback.style.color = "#c62828";
+        if (!options[optionIndex].dataset.answered) {
+          answeredCount++;
+          updateScore();
+        }
+      }
+
+      options[optionIndex].dataset.answered = 'true';
+
+      // Disable other options
+      options.forEach((opt, i) => {
+        if (i !== optionIndex) {
+          opt.style.pointerEvents = 'none';
+          opt.style.opacity = '0.7';
+        }
+      });
+    }
+
+    function updateScore() {
+      document.getElementById('score-display').textContent = `Score: ${score} / 10`;
+    }
+
+    function checkAllAnswers() {
+      // Reveal all
+      questions.forEach((q, idx) => {
+        const options = document.querySelectorAll(`#options-${idx} .option`);
+        options.forEach((opt, i) => {
+          opt.classList.remove('correct', 'incorrect');
+          if (i === q.correct) {
+            opt.classList.add('correct');
+          } else {
+            opt.classList.add('incorrect');
+          }
+          opt.style.pointerEvents = 'none';
+          opt.style.opacity = '0.8';
+        });
+      });
+
+      // Show final result
+      const resultDiv = document.getElementById('final-result');
+      let msg, cls;
+      if (score === 10) {
+        msg = "🎉 Perfect! You got all 10 right — amazing job!";
+        cls = "correct";
+      } else if (score >= 7) {
+        msg = `✅ Great! ${score}/10 — you’re doing really well!`;
+        cls = "almost";
+      } else {
+        msg = `💡 ${score}/10 — review the mistakes and try again. Every attempt makes you stronger!`;
+        cls = "try-again";
+      }
+      resultDiv.innerHTML = msg;
+      resultDiv.className = `final-result ${cls}`;
+
+      document.getElementById('checkBtn').disabled = true;
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      initQuiz();
+
+      document.getElementById('checkBtn').addEventListener('click', checkAllAnswers);
+      document.getElementById('restartBtn').addEventListener('click', initQuiz);
+    });
+  </script>
+
+</body>
+</html>
+
